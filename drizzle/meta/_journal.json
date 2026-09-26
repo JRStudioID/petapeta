@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1790053572326,
+      "tag": "0000_fixed_major_mapleleaf",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1790056165275,
+      "tag": "0001_lowly_wild_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1790059645958,
+      "tag": "0002_clammy_blue_marvel",
+      "breakpoints": true
+    }
+  ]
+}

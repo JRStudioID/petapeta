@@ -1,0 +1,20 @@
+from pathlib import Path
+
+home=Path('/home/ubuntu/petakaya-financial-wellness/client/src/pages/Home.tsx')
+s=home.read_text()
+old='<div className="mt-8 rounded-2xl border border-dashed border-[#cbdcc9] bg-[#f5faf3] p-7 text-center"><BarChart3 className="mx-auto text-[#9db99f]" size={28}/><p className="mt-4 text-sm font-bold text-[#607867]">Belum ada snapshot</p><p className="mt-2 text-xs leading-5 text-[#849187]">Grafik dan rekap akan muncul setelah kamu menyimpan aktivitas pertama.</p></div><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-xl border border-[#e6ece4] p-3"><p className="text-[10px] text-[#8b978e]">Aset</p><p className="mt-1 text-sm font-bold text-[#8b978e]">Belum diisi</p></div><div className="rounded-xl border border-[#e6ece4] p-3"><p className="text-[10px] text-[#8b978e]">Kewajiban</p><p className="mt-1 text-sm font-bold text-[#8b978e]">Belum diisi</p></div></div>'
+new='<div className="mt-8 rounded-2xl bg-[#1f2e2a] p-6 text-white"><div className="flex items-center justify-between"><p className="text-xs text-[#b6c8b8]">Contoh tampilan · data fiktif</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-[#dceaca]">DEMO</span></div><p className="mt-3 text-[11px] text-[#b6c8b8]">Bukan data pelanggan. Angka berikut hanya membantu kamu membayangkan cara kerja tracking.</p><p className="mt-5 text-xs text-[#b6c8b8]">Net Worth contoh</p><p className="mt-1 font-display text-3xl">Rp 248.750.000</p><div className="mt-5 flex h-[100px] items-end gap-2 border-b border-white/10">{[32,45,40,58,52,68,62,78,73,88].map((h,i)=><div key={i} className={`flex-1 rounded-t-sm ${i===9?"bg-[#ffb38f]":"bg-[#b9dfc4]"}`} style={{height:`${h}%`}}/>)}</div><div className="mt-4 grid grid-cols-2 gap-3"><div><p className="text-[10px] text-[#b6c8b8]">Aset contoh</p><p className="text-sm font-bold">Rp 410,2 jt</p></div><div><p className="text-[10px] text-[#b6c8b8]">Kewajiban contoh</p><p className="text-sm font-bold">Rp 161,5 jt</p></div></div></div>'
+if old not in s: raise SystemExit('home demo block not found')
+home.write_text(s.replace(old,new))
+
+p=Path('/home/ubuntu/petakaya-financial-wellness/client/src/pages/NetWorth.tsx')
+s=p.read_text()
+needle='const starterLiabilities: NetworthItem[] = [];\n'
+insert='const starterLiabilities: NetworthItem[] = [];\nconst readDraft = () => { try { const parsed = JSON.parse(window.localStorage.getItem("petakaya_networth_preview") || "{}"); return { assets: Array.isArray(parsed.assets) ? parsed.assets as NetworthItem[] : starterAssets, liabilities: Array.isArray(parsed.liabilities) ? parsed.liabilities as NetworthItem[] : starterLiabilities }; } catch { return { assets: starterAssets, liabilities: starterLiabilities }; } };\n'
+s=s.replace(needle,insert)
+s=s.replace('const [assets, setAssets] = useState<NetworthItem[]>(starterAssets);','const [assets, setAssets] = useState<NetworthItem[]>(() => readDraft().assets);')
+s=s.replace('const [liabilities, setLiabilities] = useState<NetworthItem[]>(starterLiabilities);','const [liabilities, setLiabilities] = useState<NetworthItem[]>(() => readDraft().liabilities);')
+old='<div className="mt-9 h-[180px] border-b border-[#dce9dc]"><svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible"><polyline points={linePoints} fill="none" stroke="#79559a" strokeWidth="1.8" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />{chartValues.map((value, index) => value === null ? null : <circle key={index} cx={chartValues.length <= 1 ? 50 : (index / (chartValues.length - 1)) * 100} cy={92 - (value / maxChart) * 78} r="1.8" fill="#ffb38f" vectorEffect="non-scaling-stroke" />)}</svg></div>'
+new=old+'<div className="mt-6"><p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#78907f]">Grafik batang · tren nominal</p><div className="flex h-[120px] items-end gap-2 border-b border-[#dce9dc]">{chartBars}</div></div>'
+if old not in s: raise SystemExit('chart block not found')
+p.write_text(s.replace(old,new))

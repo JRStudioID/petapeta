@@ -1,0 +1,11 @@
+from pathlib import Path
+p=Path('/home/ubuntu/petakaya-financial-wellness/client/src/pages/Home.tsx')
+s=p.read_text()
+s=s.replace('<a href={wa} className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#bc6c4c] px-5 py-3 text-sm font-bold text-white">Tanya Admin untuk MVP', '<Link href="/pricing" className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#bc6c4c] px-5 py-3 text-sm font-bold text-white">Tanya Admin untuk MVP')
+s=s.replace('Tanya Admin untuk MVP <ArrowRight size={15}/></a>', 'Tanya Admin untuk MVP <ArrowRight size={15}/></Link>')
+p.write_text(s)
+a=Path('/home/ubuntu/petakaya-financial-wellness/client/src/App.tsx')
+s=a.read_text()
+s=s.replace('import NotFound from "./pages/NotFound";', 'import NotFound from "./pages/NotFound";\nimport Pricing from "./pages/Pricing";')
+s=s.replace('<Route path="/pricing" component={Home} />', '<Route path="/pricing" component={Pricing} />')
+a.write_text(s)
