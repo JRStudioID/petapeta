@@ -25,15 +25,19 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
       await utils.auth.me.invalidate();
       await utils.auth.me.refetch();
       
-      if (data.role === "admin") {
-        toast.success("Akses Admin Terbuka! Selamat datang Owner Petakaya.");
-        setLocation("/owner");
-      } else {
-        toast.success("Login Berhasil! Selamat datang di Petakaya.");
-      }
+      toast.success(
+        data.role === "admin"
+          ? "Akses Admin Terbuka! Selamat datang Owner Petakaya."
+          : "Login Berhasil! Selamat datang di Petakaya."
+      );
 
       onClose();
       if (onSuccess) onSuccess();
+
+      // Refresh current page so protected routes unlock immediately
+      setTimeout(() => {
+        window.location.reload();
+      }, 250);
     },
     onError: (err) => {
       setError(err.message || "Gagal masuk. Silakan coba lagi.");
@@ -49,7 +53,15 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
       return;
     }
     setError("");
-    loginMutation.mutate({ email, name, password, role });
+    const normalized = email.trim().toLowerCase();
+    const isTargetAdmin = normalized === "admin" || normalized === "admin@petakaya.com" || role === "admin";
+    
+    loginMutation.mutate({
+      email,
+      name: name || (isTargetAdmin ? "Owner / Admin Petakaya" : "User Petakaya"),
+      password,
+      role: isTargetAdmin ? "admin" : role,
+    });
   };
 
   const handleQuickLogin = (quickRole: "user" | "admin") => {
