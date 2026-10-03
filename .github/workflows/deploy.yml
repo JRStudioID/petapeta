@@ -18,7 +18,7 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          printf '%s' "$SSH_PRIVATE_KEY_B64" | base64 --decode > ~/.ssh/petapeta_deploy
+          printf '%s' "$SSH_PRIVATE_KEY_B64" | tr -d '[:space:]' | base64 --decode > ~/.ssh/petapeta_deploy
           chmod 600 ~/.ssh/petapeta_deploy
 
           ssh-keyscan -H 43.156.185.38 >> ~/.ssh/known_hosts
