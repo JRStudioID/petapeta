@@ -24,28 +24,41 @@ export const appRouter = router({
     login: publicProcedure
       .input(
         z.object({
-          email: z.string().email(),
-          name: z.string().min(2),
-          role: z.enum(["user", "admin"]).default("user"),
+          email: z.string(),
+          name: z.string().optional(),
+          password: z.string().optional(),
+          role: z.enum(["user", "admin"]).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const openId = `usr_${input.email.replace(/[^a-zA-Z0-9]/g, "_")}`;
+        const normalizedEmail = input.email.trim().toLowerCase();
+        const isAdminCreds = normalizedEmail === "admin" || normalizedEmail === "admin@petakaya.com" || input.role === "admin";
+        
+        // If logging in as admin, check password if provided
+        if (isAdminCreds && input.password && input.password !== "admin123" && input.password !== "owner2026") {
+          throw new Error("Password admin salah. Gunakan: admin123");
+        }
+
+        const userRole = isAdminCreds ? "admin" : (input.role || "user");
+        const userEmail = isAdminCreds ? "admin@petakaya.com" : normalizedEmail;
+        const userName = input.name?.trim() || (userRole === "admin" ? "Owner / Admin Petakaya" : "User Petakaya");
+        const openId = `usr_${userEmail.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
         await upsertUser({
           openId,
-          name: input.name,
-          email: input.email,
+          name: userName,
+          email: userEmail,
           loginMethod: "Password / Direct Login",
-          role: input.role,
+          role: userRole,
           lastSignedIn: new Date(),
         });
         const sessionToken = await sdk.createSessionToken(openId, {
-          name: input.name,
+          name: userName,
           expiresInMs: ONE_YEAR_MS,
         });
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-        return { success: true, role: input.role };
+        return { success: true, role: userRole };
       }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);

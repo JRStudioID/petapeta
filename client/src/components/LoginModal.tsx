@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { startLogin } from "@/const";
-import { AlertCircle, CheckCircle2, KeyRound, Lock, ShieldCheck, Sparkles, User, X } from "lucide-react";
+import { AlertCircle, KeyRound, Lock, ShieldCheck, Sparkles, User, X } from "lucide-react";
 import React, { useState } from "react";
 
 interface LoginModalProps {
@@ -13,6 +13,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   const utils = trpc.useUtils();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<"user" | "admin">("user");
   const [error, setError] = useState("");
 
@@ -31,24 +32,21 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes("@")) {
-      setError("Masukkan alamat email yang valid");
-      return;
-    }
-    if (!name.trim()) {
-      setError("Masukkan nama Anda");
+    if (!email) {
+      setError("Masukkan email atau username");
       return;
     }
     setError("");
-    loginMutation.mutate({ email, name, role });
+    loginMutation.mutate({ email, name, password, role });
   };
 
   const handleQuickLogin = (quickRole: "user" | "admin") => {
     setError("");
     if (quickRole === "admin") {
       loginMutation.mutate({
-        email: "owner@petakaya.com",
+        email: "admin@petakaya.com",
         name: "Owner / Admin Petakaya",
+        password: "admin123",
         role: "admin",
       });
     } else {
@@ -58,6 +56,14 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
         role: "user",
       });
     }
+  };
+
+  const fillAdminCreds = () => {
+    setEmail("admin@petakaya.com");
+    setPassword("admin123");
+    setName("Owner / Admin Petakaya");
+    setRole("admin");
+    setError("");
   };
 
   return (
@@ -82,26 +88,46 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
           </div>
         </div>
 
+        {/* Info Box Admin Credentials */}
+        <div className="mt-4 rounded-2xl border border-[#f0dfd5] bg-[#fffaf7] p-3.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#bc6c4c]">
+              <KeyRound size={15} /> Kredensial Admin / Owner:
+            </div>
+            <button
+              type="button"
+              onClick={fillAdminCreds}
+              className="rounded-lg bg-[#f9e9e1] px-2.5 py-1 text-[10px] font-bold text-[#bc6c4c] hover:bg-[#f3ded4]"
+            >
+              Isi Form Admin
+            </button>
+          </div>
+          <div className="mt-2 text-[11px] leading-5 text-[#9a7b6d]">
+            <p>• <b>Email / User</b>: <code className="rounded bg-white/80 px-1 py-0.5 font-bold">admin@petakaya.com</code> (atau <code className="rounded bg-white/80 px-1 py-0.5 font-bold">admin</code>)</p>
+            <p>• <b>Password</b>: <code className="rounded bg-white/80 px-1 py-0.5 font-bold">admin123</code></p>
+          </div>
+        </div>
+
         {/* Error Alert */}
         {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#fdf2f0] p-3 text-xs font-semibold text-[#b24e33]">
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#fdf2f0] p-3 text-xs font-semibold text-[#b24e33]">
             <AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
         {/* Quick Demo Access Presets */}
-        <div className="mt-6">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#9aa79d]">Masuk Cepat (Akses Langsung)</p>
-          <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
+        <div className="mt-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#9aa79d]">Akses Langsung 1-Klik</p>
+          <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
             <button
               type="button"
               disabled={loginMutation.isPending}
               onClick={() => handleQuickLogin("admin")}
-              className="flex items-center gap-2.5 rounded-xl border border-[#f0dfd5] bg-[#fffaf7] p-3 text-left transition hover:border-[#bc6c4c] hover:shadow-sm disabled:opacity-50"
+              className="flex items-center gap-2.5 rounded-xl border border-[#f0dfd5] bg-[#fffaf7] p-2.5 text-left transition hover:border-[#bc6c4c] hover:shadow-sm disabled:opacity-50"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f9e9e1] text-[#bc6c4c]">
-                <ShieldCheck size={16} />
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f9e9e1] text-[#bc6c4c]">
+                <ShieldCheck size={15} />
               </div>
               <div>
                 <p className="text-xs font-bold text-[#1f2e2a]">Akses Admin/Owner</p>
@@ -113,10 +139,10 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
               type="button"
               disabled={loginMutation.isPending}
               onClick={() => handleQuickLogin("user")}
-              className="flex items-center gap-2.5 rounded-xl border border-[#dce6da] bg-[#fafcf9] p-3 text-left transition hover:border-[#aebdae] hover:shadow-sm disabled:opacity-50"
+              className="flex items-center gap-2.5 rounded-xl border border-[#dce6da] bg-[#fafcf9] p-2.5 text-left transition hover:border-[#aebdae] hover:shadow-sm disabled:opacity-50"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#edf3eb] text-[#5f7164]">
-                <User size={16} />
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#edf3eb] text-[#5f7164]">
+                <User size={15} />
               </div>
               <div>
                 <p className="text-xs font-bold text-[#1f2e2a]">Akses User Biasa</p>
@@ -127,43 +153,43 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
         </div>
 
         {/* Divider */}
-        <div className="my-5 flex items-center gap-3">
+        <div className="my-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-[#e3ebe0]" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#9aa79d]">atau isi email Anda</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#9aa79d]">atau isi email & password</span>
           <div className="h-px flex-1 bg-[#e3ebe0]" />
         </div>
 
         {/* Custom Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-xs font-bold text-[#4e5c54]">Nama Lengkap</label>
+            <label className="text-xs font-bold text-[#4e5c54]">Email / Username</label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Budi Santoso"
-              className="mt-1 w-full rounded-xl border border-[#dce6da] bg-[#fafcf9] px-3.5 py-2.5 text-xs outline-none focus:border-[#1f2e2a]"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@petakaya.com atau user@domain.com"
+              className="mt-1 w-full rounded-xl border border-[#dce6da] bg-[#fafcf9] px-3.5 py-2 text-xs outline-none focus:border-[#1f2e2a]"
             />
           </div>
 
           <div>
-            <label className="text-xs font-bold text-[#4e5c54]">Email</label>
+            <label className="text-xs font-bold text-[#4e5c54]">Password (opsional untuk user biasa, admin: <code className="text-[#bc6c4c]">admin123</code>)</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@domain.com"
-              className="mt-1 w-full rounded-xl border border-[#dce6da] bg-[#fafcf9] px-3.5 py-2.5 text-xs outline-none focus:border-[#1f2e2a]"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="mt-1 w-full rounded-xl border border-[#dce6da] bg-[#fafcf9] px-3.5 py-2 text-xs outline-none focus:border-[#1f2e2a]"
             />
           </div>
 
           <div>
             <label className="text-xs font-bold text-[#4e5c54]">Role Peran</label>
-            <div className="mt-1.5 grid grid-cols-2 gap-2">
+            <div className="mt-1 grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setRole("user")}
-                className={`rounded-xl border py-2 text-xs font-bold transition ${
+                className={`rounded-xl border py-1.5 text-xs font-bold transition ${
                   role === "user" ? "border-[#1f2e2a] bg-[#1f2e2a] text-white" : "border-[#dce6da] bg-[#fafcf9] text-[#65736a]"
                 }`}
               >
@@ -172,7 +198,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
               <button
                 type="button"
                 onClick={() => setRole("admin")}
-                className={`rounded-xl border py-2 text-xs font-bold transition ${
+                className={`rounded-xl border py-1.5 text-xs font-bold transition ${
                   role === "admin" ? "border-[#bc6c4c] bg-[#bc6c4c] text-white" : "border-[#dce6da] bg-[#fafcf9] text-[#65736a]"
                 }`}
               >
@@ -191,7 +217,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
         </form>
 
         {/* OAuth Portal Alternative */}
-        <div className="mt-4 text-center">
+        <div className="mt-3 text-center">
           <button
             type="button"
             onClick={() => startLogin()}
