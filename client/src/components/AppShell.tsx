@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin } from "@/const";
+import LoginModal from "./LoginModal";
 import { ArrowUpRight, CircleUserRound, Lock, LogOut, Menu, ShieldCheck, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
@@ -7,6 +7,7 @@ import { useState } from "react";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const isAdmin = user?.role === "admin";
   const isLanding = location === "/";
@@ -81,7 +82,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             ) : (
               <button
-                onClick={() => startLogin()}
+                onClick={() => setLoginModalOpen(true)}
                 className="flex items-center gap-2 rounded-full border border-[#d4ded3] bg-[#1f2e2a] px-4 py-2 text-[13px] font-semibold text-white shadow-sm hover:bg-[#30443d]"
               >
                 <CircleUserRound size={15} /> Masuk
@@ -130,7 +131,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <button
                     onClick={() => {
                       setMobileOpen(false);
-                      startLogin();
+                      setLoginModalOpen(true);
                     }}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1f2e2a] py-3 text-sm font-bold text-white"
                   >
@@ -144,6 +145,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main>{children}</main>
+
+      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
       {isLanding && (
         <footer className="border-t border-[#dfe6dc] bg-[#eef2eb]">
