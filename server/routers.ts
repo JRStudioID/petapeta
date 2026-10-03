@@ -89,6 +89,18 @@ export const appRouter = router({
       const db = await getDb();
       return db ? db.select().from(dailyMetrics).orderBy(desc(dailyMetrics.metricDate)) : [];
     }),
+    users: adminProcedure.query(async () => {
+      const db = await getDb();
+      return db ? db.select().from(users).orderBy(desc(users.createdAt)) : [];
+    }),
+    updateUserRole: adminProcedure
+      .input(z.object({ userId: z.number().int().positive(), role: z.enum(["user", "admin"]) }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.update(users).set({ role: input.role }).where(eq(users.id, input.userId));
+        return { success: true };
+      }),
     confirmPayment: adminProcedure.input(z.object({ id: z.number().int().positive(), leadId: z.number().int().positive(), amount: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { persisted: false };
