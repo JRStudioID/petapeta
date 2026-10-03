@@ -2,6 +2,8 @@ import { trpc } from "@/lib/trpc";
 import { startLogin } from "@/const";
 import { AlertCircle, KeyRound, Lock, ShieldCheck, Sparkles, User, X } from "lucide-react";
 import React, { useState } from "react";
+import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface LoginModalProps {
 
 export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
   const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -18,8 +21,17 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   const [error, setError] = useState("");
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await utils.auth.me.invalidate();
+      await utils.auth.me.refetch();
+      
+      if (data.role === "admin") {
+        toast.success("Akses Admin Terbuka! Selamat datang Owner Petakaya.");
+        setLocation("/owner");
+      } else {
+        toast.success("Login Berhasil! Selamat datang di Petakaya.");
+      }
+
       onClose();
       if (onSuccess) onSuccess();
     },
