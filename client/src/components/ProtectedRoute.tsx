@@ -1,8 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin } from "@/const";
+import LoginModal from "./LoginModal";
 import { ArrowLeft, LockKeyhole, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 import { Link } from "wouter";
-import React from "react";
+import React, { useState } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,6 +11,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { user, isAuthenticated, loading } = useAuth();
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -44,7 +45,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
 
           <div className="mt-8 flex flex-col gap-3">
             <button
-              onClick={() => startLogin()}
+              onClick={() => setLoginModalOpen(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1f2e2a] py-3.5 text-sm font-bold text-white transition hover:bg-[#30443d]"
             >
               <UserCheck size={18} /> Masuk / Daftar Akun
@@ -57,6 +58,8 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
               <ArrowLeft size={15} /> Kembali ke Beranda
             </Link>
           </div>
+
+          <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
         </div>
       </div>
     );

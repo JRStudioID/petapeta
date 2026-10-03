@@ -1,11 +1,12 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
-import { getDb } from "./db";
-import { diagnosisLeads, diagnosisResults, ownerExportLogs, premiumCustomers, premiumPayments, networthSnapshots, manualPaymentRequests, retirementGoals, dailyMetrics } from "../drizzle/schema";
+import { getDb, upsertUser } from "./db";
+import { sdk } from "./_core/sdk";
+import { diagnosisLeads, diagnosisResults, ownerExportLogs, premiumCustomers, premiumPayments, networthSnapshots, manualPaymentRequests, retirementGoals, dailyMetrics, users } from "../drizzle/schema";
 
 const leadInput = z.object({
   name: z.string().min(2),
@@ -20,6 +21,32 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    login: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          name: z.string().min(2),
+          role: z.enum(["user", "admin"]).default("user"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const openId = `usr_${input.email.replace(/[^a-zA-Z0-9]/g, "_")}`;
+        await upsertUser({
+          openId,
+          name: input.name,
+          email: input.email,
+          loginMethod: "Password / Direct Login",
+          role: input.role,
+          lastSignedIn: new Date(),
+        });
+        const sessionToken = await sdk.createSessionToken(openId, {
+          name: input.name,
+          expiresInMs: ONE_YEAR_MS,
+        });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        return { success: true, role: input.role };
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
