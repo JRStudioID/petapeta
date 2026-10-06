@@ -22,7 +22,16 @@ export type SessionPayload = {
   openId: string;
   appId: string;
   name: string;
+  /** Hanya untuk login langsung (openId berawalan `usr_`); ditandatangani di dalam JWT. */
+  role?: "user" | "admin";
+  email?: string;
 };
+
+// Dipakai bila VITE_APP_ID belum diset, agar sesi login langsung tetap valid.
+const LOCAL_APP_ID = "petakaya-local";
+// Hanya untuk pengembangan lokal (non-production) bila JWT_SECRET belum diset.
+const DEV_FALLBACK_SECRET = "petakaya-dev-only-secret-change-me-in-env";
+const DIRECT_LOGIN_OPEN_ID_PREFIX = "usr_";
 
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
 const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
@@ -154,7 +163,14 @@ class SDKServer {
   }
 
   private getSessionSecret() {
-    const secret = ENV.cookieSecret;
+    let secret = ENV.cookieSecret;
+    if (!secret && !ENV.isProduction) {
+      console.warn("[Auth] JWT_SECRET belum diset, memakai secret development. Set JWT_SECRET di .env.");
+      secret = DEV_FALLBACK_SECRET;
+    }
+    if (!secret) {
+      throw new Error("JWT_SECRET is not configured");
+    }
     return new TextEncoder().encode(secret);
   }
 
@@ -165,13 +181,20 @@ class SDKServer {
    */
   async createSessionToken(
     openId: string,
-    options: { expiresInMs?: number; name?: string } = {}
+    options: {
+      expiresInMs?: number;
+      name?: string;
+      role?: "user" | "admin";
+      email?: string;
+    } = {}
   ): Promise<string> {
     return this.signSession(
       {
         openId,
-        appId: ENV.appId,
+        appId: ENV.appId || LOCAL_APP_ID,
         name: options.name || "",
+        role: options.role,
+        email: options.email,
       },
       options
     );
@@ -190,6 +213,8 @@ class SDKServer {
       openId: payload.openId,
       appId: payload.appId,
       name: payload.name,
+      ...(payload.role ? { role: payload.role } : {}),
+      ...(payload.email ? { email: payload.email } : {}),
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setExpirationTime(expirationSeconds)
@@ -198,7 +223,7 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
+  ): Promise<SessionPayload | null> {
     if (!cookieValue) {
       console.warn("[Auth] Missing session cookie");
       return null;
@@ -209,7 +234,7 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+      const { openId, appId, name, role, email } = payload as Record<string, unknown>;
 
       if (
         !isNonEmptyString(openId) ||
@@ -224,6 +249,8 @@ class SDKServer {
         openId,
         appId,
         name,
+        role: role === "admin" || role === "user" ? role : undefined,
+        email: isNonEmptyString(email) ? email : undefined,
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -288,6 +315,26 @@ class SDKServer {
     const sessionUserId = session.openId;
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
+
+    // Login langsung (username/password): bila DB tidak tersedia / belum ada record,
+    // percaya role di dalam JWT yang sudah ditandatangani server.
+    if (
+      !user &&
+      session.openId.startsWith(DIRECT_LOGIN_OPEN_ID_PREFIX) &&
+      session.role
+    ) {
+      return {
+        id: -1,
+        openId: session.openId,
+        name: session.name,
+        email: session.email ?? null,
+        loginMethod: "Password / Direct Login",
+        role: session.role,
+        createdAt: signedInAt,
+        updatedAt: signedInAt,
+        lastSignedIn: signedInAt,
+      } as AuthenticatedUser;
+    }
 
     // If user not in DB, sync from OAuth server automatically
     if (!user) {

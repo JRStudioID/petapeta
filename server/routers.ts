@@ -34,9 +34,14 @@ export const appRouter = router({
         const normalizedEmail = input.email.trim().toLowerCase();
         const isAdminCreds = normalizedEmail === "admin" || normalizedEmail === "admin@petakaya.com" || input.role === "admin";
         
-        // If logging in as admin, check password if provided
-        if (isAdminCreds && input.password && input.password !== "admin123" && input.password !== "owner2026") {
-          throw new Error("Password admin salah. Gunakan: admin123");
+        // If logging in as admin, password is strictly required and verified
+        if (isAdminCreds) {
+          if (!input.password) {
+            throw new Error("Password admin diperlukan. Gunakan: admin123");
+          }
+          if (input.password !== "admin123" && input.password !== "owner2026") {
+            throw new Error("Password admin salah. Gunakan: admin123");
+          }
         }
 
         const userRole = isAdminCreds ? "admin" : (input.role || "user");
@@ -54,11 +59,13 @@ export const appRouter = router({
         });
         const sessionToken = await sdk.createSessionToken(openId, {
           name: userName,
+          role: userRole,
+          email: userEmail,
           expiresInMs: ONE_YEAR_MS,
         });
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-        return { success: true, role: userRole };
+        return { success: true, role: userRole, token: sessionToken };
       }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);

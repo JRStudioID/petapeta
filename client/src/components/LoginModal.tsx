@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { startLogin } from "@/const";
+import { COOKIE_NAME } from "@shared/const";
 import { AlertCircle, KeyRound, Lock, ShieldCheck, Sparkles, User, X } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +23,14 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async (data) => {
+      if (data.token) {
+        try {
+          sessionStorage.setItem("manus-cookie", `${COOKIE_NAME}=${data.token}`);
+        } catch (e) {
+          console.error("Failed to store token in sessionStorage", e);
+        }
+      }
+
       await utils.auth.me.invalidate();
       await utils.auth.me.refetch();
       
