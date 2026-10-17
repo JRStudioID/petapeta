@@ -12,15 +12,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isAdmin = user?.role === "admin";
   const isLanding = location === "/";
 
+  interface NavItem {
+    href: string;
+    label: string;
+    public: boolean;
+    isOwner?: boolean;
+  }
+
   // Navigation Items setup according to role and auth state
-  const baseNavItems = [
+  const baseNavItems: NavItem[] = [
     { href: "/diagnosis", label: "Diagnosa", public: true },
+    { href: "/pricing", label: "Premium", public: true },
     { href: "/networth", label: "Net Worth Tracking", public: false },
     { href: "/retirement", label: "Goal Pensiun", public: false },
-    { href: "/pricing", label: "Premium", public: false },
   ];
 
-  const visibleNavItems = [
+  const visibleNavItems: NavItem[] = [
     ...baseNavItems,
     ...(isAdmin ? [{ href: "/owner", label: "Owner Workspace", public: false, isOwner: true }] : []),
   ];

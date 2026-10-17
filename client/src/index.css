@@ -57,10 +57,16 @@ button:active, a:active { transform: scale(.975); }
 }
 
 @media print {
-  header, footer, button, a[href], .no-print { display: none !important; }
-  body, main, #root { background: white !important; color: #1f2e2a !important; }
-  .min-h-screen, [class*="min-h-[calc"] { min-height: auto !important; }
+  header, footer, nav, button, .no-print { display: none !important; }
+  body, main, #root { background: white !important; color: #1f2e2a !important; margin: 0 !important; padding: 0 !important; }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
   .shadow-2xl, .shadow-lg, .hero-glow, .soft-shadow { box-shadow: none !important; }
-  @page { size: A4; margin: 12mm; }
-  .min-h-screen, [class*="min-h-[calc"] { max-height: 265mm !important; overflow: hidden !important; }
+  @page { size: A4 portrait; margin: 10mm; }
+  .page-break-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 }

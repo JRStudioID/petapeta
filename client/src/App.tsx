@@ -17,11 +17,12 @@ function Router() {
   return (
     <AppShell>
       <Switch>
-        {/* Public routes (Beranda & Diagnosis) */}
+        {/* Public routes (Beranda, Diagnosis, & Pricing/Premium) */}
         <Route path="/" component={Home} />
         <Route path="/diagnosis" component={Diagnosis} />
         <Route path="/diagnosis-preview" component={Diagnosis} />
         <Route path="/diagnosis-preview/result" component={Diagnosis} />
+        <Route path="/pricing" component={Pricing} />
 
         {/* User-protected routes (Memerlukan Login) */}
         <Route path="/networth">
@@ -35,13 +36,6 @@ function Router() {
           {() => (
             <ProtectedRoute>
               <Retirement />
-            </ProtectedRoute>
-          )}
-        </Route>
-        <Route path="/pricing">
-          {() => (
-            <ProtectedRoute>
-              <Pricing />
             </ProtectedRoute>
           )}
         </Route>
